@@ -33,12 +33,10 @@ def get_text(source, attribute, value):
 
 
 def get_object(
-    source, attribute=None, value: str = "", get_list: bool = False
+    source, attribute, value: str = "", get_list: bool = False
 ) -> list | str:
-    if attribute is None:
-        arg = value
-    else:
-        arg = f"[{attribute}={value}]"
+
+    arg = f"[{attribute}={value}]"
 
     if not get_list:
         result = source.find_element(By.CSS_SELECTOR, arg)
@@ -59,8 +57,12 @@ try:
 
     # Ищем только внутри этой секции
     product_headers = get_object(
-        source=pizza_section, attribute="class", value="_2qj-DTg_kGPvRApDKha_-w"
+        source=pizza_section,
+        attribute="class",
+        value="_2qj-DTg_kGPvRApDKha_-w",
+        get_list=True,
     )
+    logger.debug(f"product_headers: {len(product_headers)}")
 
     pizza_data = []
 
@@ -70,11 +72,14 @@ try:
         # Поиск кнопок выбора теста
         dough_buttons = get_object(
             source=product,
-            attribute=None,
-            value="._22tLg_N-T1_fSuHivc553F",
+            attribute="class*",
+            value="_22tLg_N-T1_fSuHivc553F",
             get_list=True,
         )
         logger.debug(f"dough_buttons: {len(dough_buttons)}")
+        logger.debug(
+            f"text button 1: {dough_buttons[0].text} text button 2: {dough_buttons[1].text}"
+        )
 
         dough = None
 
@@ -104,20 +109,25 @@ try:
             size_selector = get_object(
                 source=product, attribute="data-test-id", value="size_selector"
             )
-            logger.debug(f"size_selector: {size_selector[:25]}")
+            logger.debug(f"size_selector: {size_selector}")
 
             # список кнопок в этом блоке
             size_buttons = get_object(
-                source=size_selector, attribute="role", value="button", get_list=True
+                source=size_selector,
+                attribute="class*",
+                value="AkOaPdzKXXkN8Vsguj3lh",
+                get_list=True,
             )
             logger.debug(f"size_buttons: {len(size_buttons)}")
+            for button in size_buttons:
+                print(button)
 
             # Кликабельность кнопок
             for size_button in size_buttons:
                 size_button_attribute = size_button.get_attribute("class")
 
                 if "_3ZxcheiXBqcNXPHFDFBcmo" in size_button_attribute:
-                    diameter = size_button.text
+                    diameter = int(size_button.text.replace("см", "").strip())
                     logger.debug(f"size: {diameter}")
 
                 else:
@@ -138,9 +148,13 @@ try:
                 )
                 dict["dough"] = dough
                 dict["size"] = diameter
-                dict["price"] = get_text(
-                    source=product, attribute="data-test-id", value="amount_price"
+                dict["price"] = int(
+                    get_text(
+                        source=product, attribute="data-test-id", value="amount_price"
+                    ).replace(" ₽", "")
                 )
+                pizza_data.append(dict)
+                print(f"Pizza data: {pizza_data}")
 
 
 except Exception as e:
