@@ -1,12 +1,58 @@
 import math
+import pandas as pd
+
+
+class PizzaBuilder:
+    def __init__(self, menu):
+        self.menu = menu
+
+    def add(self, name, diameter, price):
+        Pizza(
+            name=name,
+            diameter=diameter,
+            price=price,
+            menu=self.menu,
+        )
+        return self
 
 
 class Menu:
     def __init__(self):
         self.menu = []
+        self.df = pd.DataFrame(
+            columns=[
+                "Название",
+                "Диаметр (см)",
+                "Цена (руб)",
+                "Площадь (см²)",
+                "Площадь без бортика (см²)",
+                "Отношение (руб/см²)",
+                "Отношение без бортика (руб/см²)",
+            ]
+        )
 
     def add_pizza(self, pizza):
         self.menu.append(pizza)
+        new_row = {
+            "Название": pizza.name,
+            "Диаметр (см)": pizza.diameter,
+            "Цена (руб)": pizza.price,
+            "Площадь (см²)": pizza.calculate_area(),
+            "Площадь без бортика (см²)": pizza.calculate_area(cut=2),
+            "Отношение (руб/см²)": pizza.calculate_profit(),
+            "Отношение без бортика (руб/см²)": pizza.calculate_profit(cut=2),
+        }
+        self.df = pd.concat([self.df, pd.DataFrame([new_row])], ignore_index=True)
+
+    def show_menu(self):
+        print("\nМеню в виде таблицы Pandas:")
+        print(self.df.to_string(index=False))
+
+    def get_most_profitable(self, with_rim=True):
+        column = (
+            "Отношение (руб/см²)" if with_rim else "Отношение без бортика (руб/см²)"
+        )
+        return self.df.loc[self.df[column].idxmax()]
 
 
 class Pizza:
@@ -36,14 +82,28 @@ class Pizza:
 menu = Menu()
 
 # Создаем пиццы и добавляем их в меню
-pizza1 = Pizza(name="Пепперони грин", diameter=30, price=615, menu=menu)
-pizza2 = Pizza(name="Пепперони грин", diameter=35, price=779, menu=menu)
-pizza3 = Pizza(name="Пепперони грин", diameter=40, price=919, menu=menu)
-pizza4 = Pizza(name="Ветчина и бекон", diameter=30, price=695, menu=menu)
-pizza5 = Pizza(name="Ветчина и бекон", diameter=35, price=869, menu=menu)
-pizza6 = Pizza(name="Ветчина и бекон", diameter=40, price=989, menu=menu)
+builder = PizzaBuilder(menu)
+(
+    builder.add("Пепперони грин", 30, 615)
+    .add("Пепперони грин", 35, 779)
+    .add("Пепперони грин", 40, 919)
+    .add("Ветчина и бекон", 30, 695)
+    .add("Ветчина и бекон", 35, 869)
+    .add("Ветчина и бекон", 40, 989)
+)
 
-# Выводим все пиццы из меню
-print("\nВсе пиццы в меню:")
-for pizza in menu.menu:
-    print(pizza)
+# Выводим меню в виде таблицы Pandas
+menu.show_menu()
+
+# Анализ данных
+print("\nСамая выгодная пицца (с бортиком):")
+print(menu.get_most_profitable(with_rim=True))
+
+print("\nСамая выгодная пицца (без бортика):")
+print(menu.get_most_profitable(with_rim=False))
+
+
+# Дополнительный анализ
+print("\nСредняя цена пицц:", round(menu.df["Цена (руб)"].mean(), 2), "руб")
+print("Сортировка по отношению:")
+print(menu.df.sort_values("Отношение (руб/см²)").to_string(index=False))
