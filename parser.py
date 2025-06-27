@@ -4,12 +4,13 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.action_chains import ActionChains
 import time
 import logging
 
 # Настройка логирования
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.ERROR,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[logging.StreamHandler()],
 )
@@ -25,6 +26,7 @@ options.add_argument(
 options.add_argument("--disable-blink-features=AutomationControlled")
 
 driver = webdriver.Chrome(options=options)
+actions = ActionChains(driver)
 
 
 def get_text(source, attribute, value):
@@ -67,7 +69,7 @@ try:
     pizza_data = []
 
     for product in product_headers:
-        dict = {}
+        actions.move_to_element(product).perform()
 
         # Поиск кнопок выбора теста
         dough_buttons = get_object(
@@ -85,6 +87,7 @@ try:
 
         # Проверяем кнопки
         for button in dough_buttons:
+            actions.move_to_element(button).perform()
             class_attribute = button.get_attribute("class")
 
             # Если кнопка уже активна (содержит gFWUICI_xCcypOmIgwq3L)
@@ -95,7 +98,7 @@ try:
             else:
                 # Нажимаем на неактивную кнопку (например, "Тонкое")
                 button.click()
-                time.sleep(1)  # Ждем обновления класса
+                # time.sleep(1)
 
                 # Проверяем, что кнопка стала активной
                 updated_class = button.get_attribute("class")
@@ -119,11 +122,11 @@ try:
                 get_list=True,
             )
             logger.debug(f"size_buttons: {len(size_buttons)}")
-            for button in size_buttons:
-                print(button)
 
             # Кликабельность кнопок
             for size_button in size_buttons:
+                dict = {}
+                actions.move_to_element(size_button).perform()
                 size_button_attribute = size_button.get_attribute("class")
 
                 if "_3ZxcheiXBqcNXPHFDFBcmo" in size_button_attribute:
@@ -131,11 +134,12 @@ try:
                     logger.debug(f"size: {diameter}")
 
                 else:
+
                     size_button.click()
-                    time.sleep(1)
+                    # time.sleep(1)
                     updated_size_b_attribute = size_button.get_attribute("class")
                     if "_3ZxcheiXBqcNXPHFDFBcmo" in updated_size_b_attribute:
-                        diameter = size_button.text
+                        diameter = int(size_button.text.replace("см", "").strip())
                         logger.debug(f"size: {diameter}")
 
                 dict["name"] = get_text(
@@ -151,10 +155,11 @@ try:
                 dict["price"] = int(
                     get_text(
                         source=product, attribute="data-test-id", value="amount_price"
-                    ).replace(" ₽", "")
+                    )
+                    .replace(" ₽", "")
+                    .replace(" ", "")
                 )
                 pizza_data.append(dict)
-                print(f"Pizza data: {pizza_data}")
 
 
 except Exception as e:
