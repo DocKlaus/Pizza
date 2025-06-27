@@ -5,6 +5,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
+import json
+from pathlib import Path
 import time
 import logging
 
@@ -167,3 +169,21 @@ except Exception as e:
 
 finally:
     driver.quit()
+
+try:
+    # Создаем директорию, если её нет
+    Path("data").mkdir(exist_ok=True)
+
+    # Сохраняем с красивым форматированием
+    with open("data/pizzas.json", "w", encoding="utf-8") as f:
+        json.dump(
+            pizza_data,
+            f,
+            ensure_ascii=False,  # Для корректного отображения кириллицы
+            indent=2,  # Отступы для читаемости
+            sort_keys=True,
+        )  # Сортировка ключей
+
+    print("Данные успешно сохранены в data/pizzas.json")
+except Exception as e:
+    print(f"Ошибка при сохранении: {e}")
