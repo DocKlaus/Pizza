@@ -7,7 +7,6 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 import json
 from pathlib import Path
-import time
 import logging
 
 # Настройка логирования
@@ -85,7 +84,7 @@ try:
             f"text button 1: {dough_buttons[0].text} text button 2: {dough_buttons[1].text}"
         )
 
-        dough = None
+        crust = None
 
         # Проверяем кнопки
         for button in dough_buttons:
@@ -94,8 +93,8 @@ try:
 
             # Если кнопка уже активна (содержит gFWUICI_xCcypOmIgwq3L)
             if "gFWUICI_xCcypOmIgwq3L" in class_attribute:
-                dough = button.text
-                logger.debug(f"dough: {dough}")
+                crust = button.text
+                logger.debug(f"crust: {crust}")
 
             else:
                 # Нажимаем на неактивную кнопку (например, "Тонкое")
@@ -105,8 +104,8 @@ try:
                 # Проверяем, что кнопка стала активной
                 updated_class = button.get_attribute("class")
                 if "gFWUICI_xCcypOmIgwq3L" in updated_class:
-                    dough = button.text
-                    logger.debug(f"dough: {dough}")
+                    crust = button.text
+                    logger.debug(f"crust: {crust}")
 
             # Здесь же надо найти диаметр и цену
 
@@ -152,7 +151,7 @@ try:
                 dict["description"] = get_text(
                     source=product, attribute="class", value="_2uYmw-6znBwRpeYTuDcvPN"
                 )
-                dict["dough"] = dough
+                dict["crust"] = crust
                 dict["size"] = diameter
                 dict["price"] = int(
                     get_text(
@@ -181,8 +180,7 @@ try:
             f,
             ensure_ascii=False,  # Для корректного отображения кириллицы
             indent=2,  # Отступы для читаемости
-            sort_keys=True,
-        )  # Сортировка ключей
+        )
 
     print("Данные успешно сохранены в data/pizzas.json")
 except Exception as e:
